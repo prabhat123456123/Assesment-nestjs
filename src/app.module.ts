@@ -6,8 +6,6 @@ import { AppService } from './app.service';
 import { BookModule } from './book/book.module';
 import { AuthModule } from './auth/auth.module';
 
-console.log('process.env.NODE_ENV', process.env.NODE_ENV);
-
 @Module({
   imports: [
     ConfigModule.forRoot({
