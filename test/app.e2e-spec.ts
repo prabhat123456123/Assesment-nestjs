@@ -2,45 +2,43 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import * as request from 'supertest';
 import { AppModule } from './../src/app.module';
-import mongoose from 'mongoose';
-import { Category } from '../src/book/schemas/book.schema';
+import { Sequelize } from 'sequelize-typescript';
+import { Doctor,Category} from '../src/doctor/schemas/doctor.schema';
+import { User } from '../src/auth/schemas/user.schema';
 
-describe('Book & Auth Controller (e2e)', () => {
+describe('Doctor & Auth Controller (e2e)', () => {
   let app: INestApplication;
+  let sequelize: Sequelize;
 
-  beforeEach(async () => {
+  beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
     }).compile();
 
     app = moduleFixture.createNestApplication();
     await app.init();
+
+    sequelize = moduleFixture.get<Sequelize>(Sequelize);
+    await sequelize.sync({ force: true }); // Reset database for tests
   });
 
-  beforeAll(() => {
-    mongoose.connect(process.env.DB_URI, function () {
-      mongoose.connection.db.dropDatabase();
-    });
+  afterAll(async () => {
+    await sequelize.close();
   });
-
-  afterAll(() => mongoose.disconnect());
 
   const user = {
-    name: 'Ghulam',
-    email: 'ghulam@gmail.com',
+    name: 'test',
+    email: 'test@gmail.com',
     password: '12345678',
   };
 
-  const newBook = {
-    title: 'New Book',
-    description: 'Book Description',
-    author: 'Author',
-    price: 100,
-    category: Category.FANTASY,
+  const newDoctor = {
+    name: 'New Doctor',
+    category: Category.CARDIOLOGIST,
   };
 
   let jwtToken: string = '';
-  let bookCreated;
+  let doctorCreated: Doctor;
 
   describe('Auth', () => {
     it('(POST) - Register a new user', async () => {
@@ -53,9 +51,9 @@ describe('Book & Auth Controller (e2e)', () => {
         });
     });
 
-    it('(GET) - Login user', async () => {
+    it('(POST) - Login user', async () => {
       return request(app.getHttpServer())
-        .get('/auth/login')
+        .post('/auth/login')
         .send({ email: user.email, password: user.password })
         .expect(200)
         .then((res) => {
@@ -65,56 +63,56 @@ describe('Book & Auth Controller (e2e)', () => {
     });
   });
 
-  describe('Book', () => {
-    it('(POST) - Create new Book', async () => {
+  describe('Doctor', () => {
+    it('(POST) - Create new Doctor', async () => {
       return request(app.getHttpServer())
-        .post('/books')
-        .set('Authorization', 'Bearer ' + jwtToken)
-        .send(newBook)
+        .post('/doctor')
+        .set('Authorization', `Bearer ${jwtToken}`)
+        .send(newDoctor)
         .expect(201)
         .then((res) => {
-          expect(res.body._id).toBeDefined();
-          expect(res.body.title).toEqual(newBook.title);
-          bookCreated = res.body;
+          expect(res.body.id).toBeDefined();
+          expect(res.body.title).toEqual(newDoctor.name);
+          doctorCreated = res.body;
         });
     });
 
-    it('(GET) - Get all Books', async () => {
+    it('(GET) - Get all Doctors', async () => {
       return request(app.getHttpServer())
-        .get('/books')
+        .get('/doctor')
         .expect(200)
         .then((res) => {
           expect(res.body.length).toBe(1);
         });
     });
 
-    it('(GET) - Get a Book by ID', async () => {
+    it('(GET) - Get a Doctor by ID', async () => {
       return request(app.getHttpServer())
-        .get(`/books/${bookCreated?._id}`)
+        .get(`/doctor/${doctorCreated?.id}`)
         .expect(200)
         .then((res) => {
           expect(res.body).toBeDefined();
-          expect(res.body._id).toEqual(bookCreated._id);
+          expect(res.body.id).toEqual(doctorCreated.id);
         });
     });
 
-    it('(PUT) - Update a Book by ID', async () => {
-      const book = { title: 'Updated name' };
+    it('(PUT) - Update a Doctor by ID', async () => {
+      const doctor = { name: 'Updated name',category:Category.CARDIOLOGIST };
       return request(app.getHttpServer())
-        .put(`/books/${bookCreated?._id}`)
-        .set('Authorization', 'Bearer ' + jwtToken)
-        .send(book)
+        .put(`/doctor/${doctorCreated?.id}`)
+        .set('Authorization', `Bearer ${jwtToken}`)
+        .send(doctor)
         .expect(200)
         .then((res) => {
           expect(res.body).toBeDefined();
-          expect(res.body.title).toEqual(book.title);
+          expect(res.body.title).toEqual(doctor.name);
         });
     });
 
-    it('(DELETE) - Delete a Book by ID', async () => {
+    it('(DELETE) - Delete a Doctor by ID', async () => {
       return request(app.getHttpServer())
-        .delete(`/books/${bookCreated?._id}`)
-        .set('Authorization', 'Bearer ' + jwtToken)
+        .delete(`/doctor/${doctorCreated?.id}`)
+        .set('Authorization', `Bearer ${jwtToken}`)
         .expect(200)
         .then((res) => {
           expect(res.body).toBeDefined();

@@ -6,11 +6,6 @@ describe('AuthController', () => {
   let authService: AuthService;
   let authController: AuthController;
 
-  const mockUser = {
-    _id: '61c0ccf11d7bf83d153d7c06',
-    name: 'Ghulam',
-    email: 'ghulam1@gmail.com',
-  };
 
   let jwtToken = 'jwtToken';
 
@@ -41,9 +36,10 @@ describe('AuthController', () => {
   describe('signUp', () => {
     it('should register a new user', async () => {
       const signUpDto = {
-        name: 'Ghulam',
-        email: 'ghulam1@gmail.com',
+        name: 'test',
+        email: 'test@gmail.com',
         password: '12345678',
+        role:['Admin']
       };
 
       const result = await authController.signUp(signUpDto);
@@ -55,7 +51,7 @@ describe('AuthController', () => {
   describe('login', () => {
     it('should login user', async () => {
       const loginDto = {
-        email: 'ghulam1@gmail.com',
+        email: 'test@gmail.com',
         password: '12345678',
       };
 

@@ -1,25 +1,36 @@
-import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
+import { Table, Column, Model, DataType, Default } from 'sequelize-typescript';
 import { Role } from '../enums/role.enum';
 
-@Schema({
-  timestamps: true,
+@Table({
+  tableName: 'users',
+  timestamps: true, // Enables createdAt & updatedAt fields
 })
-export class User extends Document {
-  @Prop()
+export class User extends Model<User> {
+  @Column({ type: DataType.UUID, primaryKey: true, defaultValue: DataType.UUIDV4 })
+  id: string;
+  
+  @Column({
+    type: DataType.STRING,
+    allowNull: false,
+  })
   name: string;
 
-  @Prop({ unique: [true, 'Duplicate email entered'] })
+  @Column({
+    type: DataType.STRING,
+    allowNull: false,
+    unique: true, // Ensures uniqueness in DB
+  })
   email: string;
 
-  @Prop()
+  @Column({
+    type: DataType.STRING,
+    allowNull: false,
+  })
   password: string;
 
-  @Prop({
-    type: [{ type: String, enum: Role }],
-    default: [Role.User],
+  @Column({
+    type: DataType.ARRAY(DataType.STRING), // Stores roles as an array of strings
+    defaultValue: [Role.ADMIN], // Default role is 'User'
   })
-  role: Role[];
+  role: string[];
 }
-
-export const UserSchema = SchemaFactory.createForClass(User);

@@ -14,10 +14,10 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import { BookService } from './book.service';
-import { CreateBookDto } from './dto/create-book.dto';
-import { UpdateBookDto } from './dto/update-book.dto';
-import { Book } from './schemas/book.schema';
+import { DoctorService } from './doctor.service';
+import { CreateDoctorDto } from './dto/create-doctor.dto';
+import { UpdateDoctorDto } from './dto/update-doctor.dto';
+import { Doctor } from './schemas/doctor.schema';
 
 import { Query as ExpressQuery } from 'express-serve-static-core';
 import { AuthGuard } from '@nestjs/passport';
@@ -27,60 +27,64 @@ import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { SkipThrottle, Throttle } from '@nestjs/throttler';
 
-@Controller('books')
-export class BookController {
-  constructor(private bookService: BookService) {}
+@Controller('doctor')
+export class DoctorController {
+  constructor(private doctorService: DoctorService) {}
 
   // @SkipThrottle()
   @Throttle({ default: { limit: 1, ttl: 2000 } })
   @Get()
-  @Roles(Role.Moderator, Role.Admin)
+  @Roles(Role.VIEWER, Role.ADMIN)
   @UseGuards(AuthGuard(), RolesGuard)
-  async getAllBooks(@Query() query: ExpressQuery): Promise<Book[]> {
-    return this.bookService.findAll(query);
+  async getAllDoctors(@Query() query: ExpressQuery): Promise<Doctor[]> {
+    return this.doctorService.findAll(query);
   }
 
   @Post()
-  @UseGuards(AuthGuard())
-  async createBook(
+  @Roles(Role.ADMIN)
+  @UseGuards(AuthGuard(),RolesGuard)
+  async createDoctor(
     @Body()
-    book: CreateBookDto,
-    @Req() req,
-  ): Promise<Book> {
-    return this.bookService.create(book, req.user);
+    doctor: CreateDoctorDto
+  ): Promise<Doctor> {
+    return this.doctorService.create(doctor);
   }
 
   @Get(':id')
-  async getBook(
+  async getDoctor(
     @Param('id')
-    id: string,
-  ): Promise<Book> {
-    return this.bookService.findById(id);
+    id: number,
+  ): Promise<Doctor> {
+    return this.doctorService.findById(id);
   }
 
   @Put(':id')
-  async updateBook(
+  @Roles(Role.EDITOR)
+  @UseGuards(AuthGuard(),RolesGuard)
+  async updateDoctor(
     @Param('id')
-    id: string,
+    id: number,
     @Body()
-    book: UpdateBookDto,
-  ): Promise<Book> {
-    return this.bookService.updateById(id, book);
+    doctor: UpdateDoctorDto,
+  ): Promise<Doctor> {
+    return this.doctorService.updateById(id, doctor);
   }
 
   @Delete(':id')
-  async deleteBook(
+  @Roles(Role.ADMIN)
+  @UseGuards(AuthGuard(),RolesGuard)
+  async deleteDoctor(
     @Param('id')
-    id: string,
+    id: number,
   ): Promise<{ deleted: boolean }> {
-    return this.bookService.deleteById(id);
+    return this.doctorService.deleteById(id);
   }
 
   @Put('upload/:id')
   @UseGuards(AuthGuard())
   @UseInterceptors(FilesInterceptor('files'))
   async uploadImages(
-    @Param('id') id: string,
+    @Param('id') id: number,
     @UploadedFiles(
       new ParseFilePipeBuilder()
         .addFileTypeValidator({
@@ -96,6 +100,6 @@ export class BookController {
     )
     files: Array<Express.Multer.File>,
   ) {
-    return this.bookService.uploadImages(id, files);
+    return this.doctorService.uploadImages(id, files);
   }
 }

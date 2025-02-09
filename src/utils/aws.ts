@@ -14,7 +14,7 @@ export async function uploadImages(files: Array<Express.Multer.File>) {
         const filename = file.originalname;
 
         const params = {
-          Bucket: `${process.env.AWS_S3_BUCKET_NAME}/books`,
+          Bucket: `${process.env.AWS_S3_BUCKET_NAME}/doctor`,
           Key: filename,
           Body: file.buffer,
         };
