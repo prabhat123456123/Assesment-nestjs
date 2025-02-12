@@ -6,6 +6,8 @@ import * as bcrypt from 'bcryptjs';
 import { ConflictException, UnauthorizedException } from '@nestjs/common';
 import { getModelToken } from '@nestjs/sequelize';
 import { Repository } from 'sequelize-typescript';
+import { UniqueConstraintError } from 'sequelize';
+import { Response } from 'express';
 
 describe('AuthService', () => {
   let authService: AuthService;
@@ -63,12 +65,18 @@ describe('AuthService', () => {
       const result = await authService.signUp(signUpDto);
 
       expect(bcrypt.hash).toHaveBeenCalled();
-      expect(result).toEqual({ token });
+      expect(userRepository.create).toHaveBeenCalledWith({
+        name: signUpDto.name,
+        email: signUpDto.email,
+        password: 'hashedPassword',
+        role: ['admin'],
+      });
+      expect(result).toEqual(mockUser);
     });
 
     it('should throw duplicate email entered', async () => {
-      jest.spyOn(userRepository, 'create').mockRejectedValue({ name: 'SequelizeUniqueConstraintError' });
-      
+      jest.spyOn(userRepository, 'create').mockRejectedValue(new UniqueConstraintError({ errors: [] })); // Mock correct error
+
       await expect(authService.signUp(signUpDto)).rejects.toThrow(ConflictException);
     });
   });
@@ -78,28 +86,78 @@ describe('AuthService', () => {
       email: 'test1@gmail.com',
       password: '12345678',
     };
+   let res: any; // Mock Response object
+
+   beforeEach(() => {
+     res = {
+       cookie: jest.fn(), // Mock res.cookie()
+       json: jest.fn(),   // Mock res.json()
+     };
+   });
 
     it('should login user and return the token', async () => {
       jest.spyOn(userRepository, 'findOne').mockResolvedValue(mockUser as any);
       jest.spyOn(bcrypt, 'compare').mockResolvedValue(true);
       jest.spyOn(jwtService, 'sign').mockReturnValue(token);
 
-      const result = await authService.login(loginDto);
+      const result = await authService.login(loginDto,res);
 
-      expect(result).toEqual({ token });
+      expect(res.cookie).toHaveBeenCalledWith('auth_token', token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        maxAge: 24 * 60 * 60 * 1000,
+      });
+  
+      expect(res.json).toHaveBeenCalledWith({ message: 'Logged In....', token });
     });
 
     it('should throw invalid email error', async () => {
       jest.spyOn(userRepository, 'findOne').mockResolvedValue(null);
       
-      await expect(authService.login(loginDto)).rejects.toThrow(UnauthorizedException);
+      await expect(authService.login(loginDto,res)).rejects.toThrow(UnauthorizedException);
     });
 
     it('should throw invalid password error', async () => {
       jest.spyOn(userRepository, 'findOne').mockResolvedValue(mockUser as any);
       jest.spyOn(bcrypt, 'compare').mockResolvedValue(false);
 
-      await expect(authService.login(loginDto)).rejects.toThrow(UnauthorizedException);
+      await expect(authService.login(loginDto,res)).rejects.toThrow(UnauthorizedException);
     });
   });
+  
+  // describe('logout', () => {
+  //   let authService: AuthService;
+  //   let mockResponse: Partial<Response>;
+  
+  //   beforeEach(async () => {
+  //     const module: TestingModule = await Test.createTestingModule({
+  //       providers: [AuthService],
+  //     }).compile();
+  
+  //     authService = module.get<AuthService>(AuthService);
+  
+  //     // Mock only the necessary functions from Response
+  //     mockResponse = {
+  //       cookie: jest.fn(),
+  //       json: jest.fn(),
+  //     } as Partial<Response> as Response; // Ensure it matches Response type
+  //   });
+  
+  //   it('should clear the auth_token cookie and return a success message', async () => {
+  //     await authService.logout(mockResponse as Response);
+  
+  //     expect(mockResponse.cookie).toHaveBeenCalledWith('auth_token', '', {
+  //       httpOnly: true,
+  //       secure: process.env.NODE_ENV === 'production',
+  //       sameSite: 'strict',
+  //       expires: new Date(0),
+  //     });
+  
+  //     expect(mockResponse.json).toHaveBeenCalledWith({ message: 'Logged out successfully' });
+  //   });
+  // });
+  
+  
+
 });

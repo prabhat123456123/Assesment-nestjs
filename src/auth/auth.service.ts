@@ -68,7 +68,7 @@ export class AuthService {
       sameSite: 'strict', // Prevent CSRF attacks
       maxAge: 24 * 60 * 60 * 1000, // 1 day
     });
-    let data = {mesaage:"Logged In....",token }
+    let data = {message:"Logged In....",token }
     return res.json(data);
   }
   async logout(@Res() res: Response): Promise<any> {

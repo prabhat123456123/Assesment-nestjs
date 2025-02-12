@@ -5,6 +5,7 @@ import { Category } from './schemas/doctor.schema';
 import { PassportModule } from '@nestjs/passport';
 import { CreateDoctorDto } from './dto/create-doctor.dto';
 import { UpdateDoctorDto } from './dto/update-doctor.dto';
+import { uploadImages } from '../utils/aws';
 
 describe('DoctorController', () => {
   let doctorService: DoctorService;

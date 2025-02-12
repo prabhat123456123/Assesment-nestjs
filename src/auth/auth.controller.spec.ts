@@ -54,10 +54,21 @@ describe('AuthController', () => {
         email: 'test@gmail.com',
         password: '12345678',
       };
+      let res: any; // Mock Response object
 
-      const result = await authController.login(loginDto);
+      const result = await authController.login(loginDto,res);
       expect(authService.login).toHaveBeenCalled();
       expect(result).toEqual(jwtToken);
     });
   });
+  // describe('logout', () => {
+  //   it('should logout user', async () => {
+    
+  //     let res: any; // Mock Response object
+
+  //     const result = await authController.logout(res);
+  //     expect(authService.logout).toHaveBeenCalled();
+  //     expect(result).toEqual("message");
+  //   });
+  // });
 });

@@ -8,7 +8,7 @@ import { Doctor } from './schemas/doctor.schema';
 import { CreateDoctorDto } from './dto/create-doctor.dto';
 import { UpdateDoctorDto } from './dto/update-doctor.dto';
 import { Query } from 'express-serve-static-core';
-import { uploadImages } from 'src/utils/aws';
+import { uploadImages } from '../utils/aws';
 
 @Injectable()
 export class DoctorService {
