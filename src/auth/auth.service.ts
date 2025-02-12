@@ -1,6 +1,8 @@
 import {
+  Body,
   ConflictException,
   Injectable,
+  Res,
   UnauthorizedException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
@@ -9,6 +11,7 @@ import * as bcrypt from 'bcryptjs';
 import { JwtService } from '@nestjs/jwt';
 import { SignUpDto } from './dto/signup.dto';
 import { LoginDto } from './dto/login.dto';
+import { Response } from 'express'; // Import Response from Express
 import { UniqueConstraintError } from 'sequelize';
 
 @Injectable()
@@ -41,7 +44,8 @@ export class AuthService {
     }
   }
 
-  async login(loginDto: LoginDto): Promise<{ mesaage:string,token: string }> {
+
+  async login(@Body() loginDto: LoginDto,@Res() res: Response): Promise<any> {
     const { email, password } = loginDto;
 
     const user = await this.userModel.findOne({ where: { email } });
@@ -57,6 +61,24 @@ export class AuthService {
     }
 
     const token = this.jwtService.sign({ id: user.id });
-    return { mesaage:"Logged In....",token };
+    // Store token in HTTP-only cookie
+    res.cookie('auth_token', token, {
+      httpOnly: true, 
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict', // Prevent CSRF attacks
+      maxAge: 24 * 60 * 60 * 1000, // 1 day
+    });
+    let data = {mesaage:"Logged In....",token }
+    return res.json(data);
+  }
+  async logout(@Res() res: Response): Promise<any> {
+    res.cookie('auth_token', '', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      expires: new Date(0), // Expire immediately
+    });
+
+    return res.json({ message: "Logged out successfully" });
   }
 }
