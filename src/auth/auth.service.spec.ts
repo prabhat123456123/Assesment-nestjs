@@ -102,7 +102,7 @@ describe('AuthService', () => {
 
       const result = await authService.login(loginDto,res);
 
-      expect(res.cookie).toHaveBeenCalledWith('auth_token', token, {
+      expect(res.cookie).toHaveBeenCalledWith('token', token, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'strict',
@@ -126,38 +126,31 @@ describe('AuthService', () => {
     });
   });
   
-  // describe('logout', () => {
-  //   let authService: AuthService;
-  //   let mockResponse: Partial<Response>;
-  
-  //   beforeEach(async () => {
-  //     const module: TestingModule = await Test.createTestingModule({
-  //       providers: [AuthService],
-  //     }).compile();
-  
-  //     authService = module.get<AuthService>(AuthService);
-  
-  //     // Mock only the necessary functions from Response
-  //     mockResponse = {
-  //       cookie: jest.fn(),
-  //       json: jest.fn(),
-  //     } as Partial<Response> as Response; // Ensure it matches Response type
-  //   });
-  
-  //   it('should clear the auth_token cookie and return a success message', async () => {
-  //     await authService.logout(mockResponse as Response);
-  
-  //     expect(mockResponse.cookie).toHaveBeenCalledWith('auth_token', '', {
-  //       httpOnly: true,
-  //       secure: process.env.NODE_ENV === 'production',
-  //       sameSite: 'strict',
-  //       expires: new Date(0),
-  //     });
-  
-  //     expect(mockResponse.json).toHaveBeenCalledWith({ message: 'Logged out successfully' });
-  //   });
-  // });
-  
-  
+  describe('logout', () => {
+ 
+   let res: any; // Mock Response object
 
+   beforeEach(() => {
+     res = {
+       cookie: jest.fn(), // Mock res.cookie()
+       json: jest.fn(),   // Mock res.json()
+     };
+   });
+
+   it('should logout user and return the message', async () => {
+    jest.spyOn(userRepository, 'findOne').mockResolvedValue(mockUser as any);
+
+    const result = await authService.logout(res);
+
+    expect(res.cookie).toHaveBeenCalledWith('token', '', {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        expires: new Date(0), // Match the actual implementation
+        path: '/' // Ensure global clearing
+    });
+
+    expect(res.json).toHaveBeenCalledWith({ message: "Logged out successfully" });
+});
+  });
 });

@@ -61,14 +61,20 @@ describe('AuthController', () => {
       expect(result).toEqual(jwtToken);
     });
   });
-  // describe('logout', () => {
-  //   it('should logout user', async () => {
-    
-  //     let res: any; // Mock Response object
+  
+//   describe('AuthController', () => {
+  
+//     it('should logout user', async () => {
+//         const res: any = {
+//             cookie: jest.fn(),
+//             json: jest.fn()
+//         }; // Mock Response object
 
-  //     const result = await authController.logout(res);
-  //     expect(authService.logout).toHaveBeenCalled();
-  //     expect(result).toEqual("message");
-  //   });
-  // });
+//        const result = await authController.logout(res);
+
+//         expect(authService.logout).toHaveBeenCalled();
+//         expect(result).toHaveBeenCalledWith({ message: "Logged out successfully" });
+//     });
+// });
+
 });

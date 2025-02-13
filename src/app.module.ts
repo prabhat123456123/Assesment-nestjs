@@ -12,7 +12,6 @@ import { User } from './auth/schemas/user.schema';
 import { ConfigService } from '@nestjs/config';
 import { IngestionModule } from './ingestion/ingestion.module';
 
-console.log("??????????????",process.env.USERNAME)
 @Module({
   imports: [
     ThrottlerModule.forRoot([
@@ -33,10 +32,16 @@ console.log("??????????????",process.env.USERNAME)
       password: process.env.PASSWORD, // Change as per your DB password
       database: process.env.DATABASE, // Change as per your DB name
       autoLoadModels: true, // Automatically load models
-      synchronize: true, // Auto-sync models (disable in production)
+      synchronize: true, // Auto-sync models (disable in production),
+      pool: {
+        max: 10,
+        min: 1,
+        acquire: 60000, // Increase timeout (default is 10000)
+        idle: 10000,
+      },
+      logging:console.log
     }),
     SequelizeModule.forFeature([User]),
-    // MongooseModule.forRoot(process.env.DB_URI),
     IngestionModule,
     DoctorModule,
     AuthModule,

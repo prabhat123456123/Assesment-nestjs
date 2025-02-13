@@ -62,7 +62,7 @@ export class AuthService {
 
     const token = this.jwtService.sign({ id: user.id });
     // Store token in HTTP-only cookie
-    res.cookie('auth_token', token, {
+    res.cookie('token', token, {
       httpOnly: true, 
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict', // Prevent CSRF attacks
@@ -72,11 +72,12 @@ export class AuthService {
     return res.json(data);
   }
   async logout(@Res() res: Response): Promise<any> {
-    res.cookie('auth_token', '', {
+    res.cookie('token', '', {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
-      expires: new Date(0), // Expire immediately
+      expires: new Date(0), // Expire immediately,
+      path: '/' // Ensure the cookie is cleared globally
     });
 
     return res.json({ message: "Logged out successfully" });
